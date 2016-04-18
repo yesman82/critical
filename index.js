@@ -15,6 +15,28 @@ var inliner = require('./lib/inline-styles');
 
 Promise.promisifyAll(fs);
 
+function parseOptions(opts) {
+    var options = _.defaults(opts || {}, {
+        base: file.guessBasePath(opts || {}),
+        minify: false,
+        dimensions: [{
+            height: opts.height || 900,
+            width: opts.width || 1300
+        }]
+    });
+
+    if (options.inline) {
+        options.inline = _.isObject(options.inline) || {};
+        options.inline = _.defaults(options.inline, {
+            minify: options.minify || false,
+            extract: options.extract || false,
+            basePath: options.base || process.cwd()
+        });
+    }
+
+    return options;
+}
+
 /**
  * Critical path CSS generation
  * @param  {object} opts Options
@@ -23,13 +45,7 @@ Promise.promisifyAll(fs);
  * @return {Promise}|undefined
  */
 exports.generate = function (opts, cb) {
-    opts = _.defaults(opts || {}, {
-        base: file.guessBasePath(opts || {}),
-        dimensions: [{
-            height: opts.height || 900,
-            width: opts.width || 1300
-        }]
-    });
+    opts = parseOptions(opts);
 
     // generate critical css
     var corePromise = core.generate(opts);
@@ -52,11 +68,7 @@ exports.generate = function (opts, cb) {
             html: file.getContentPromise(opts),
             css: corePromise
         }).then(function (result) {
-            return sourceInliner(result.html, result.css, {
-                minify: opts.minify || false,
-                extract: opts.extract || false,
-                basePath: opts.base || process.cwd()
-            });
+            return sourceInliner(result.html, result.css, opts.inline);
         });
     }
 
