@@ -166,7 +166,7 @@ describe('CLI', function () {
             assert.strictEqual(this.mockOpts.minify, 'minify');
             assert.strictEqual(this.mockOpts.extract, 'extract');
             assert.strictEqual(this.mockOpts.pathPrefix, 'pathPrefix');
-            assert.strictEqual(this.mockOpts.inline, true);
+            assert.instanceOf(this.mockOpts.inline, Object);
         });
 
         it('should pass the correct opts when using long opts', function () {
@@ -182,7 +182,9 @@ describe('CLI', function () {
                 '--htmlTarget', 'htmlTarget',
                 '--styleTarget', 'styleTarget',
                 '--minify', 'minify',
-                '--extract', 'extract',
+                '--inline-extract', 'extract',
+                '--inline-ignore', 'ignore',
+                '--inline-selector', 'selector',
                 '--pathPrefix', 'pathPrefix',
                 '--inline',
                 '--inlineImages',
@@ -199,13 +201,15 @@ describe('CLI', function () {
             assert.strictEqual(this.mockOpts.htmlTarget, 'htmlTarget');
             assert.strictEqual(this.mockOpts.styleTarget, 'styleTarget');
             assert.strictEqual(this.mockOpts.minify, 'minify');
-            assert.strictEqual(this.mockOpts.extract, 'extract');
             assert.strictEqual(this.mockOpts.pathPrefix, 'pathPrefix');
             assert.isArray(this.mockOpts.ignore);
             assert.include(this.mockOpts.ignore, 'ignore');
             assert.isArray(this.mockOpts.include);
             assert.instanceOf(this.mockOpts.include[0], RegExp);
-            assert.strictEqual(this.mockOpts.inline, true);
+            assert.instanceOf(this.mockOpts.inline, Object);
+            assert.strictEqual(this.mockOpts.inline.extract, 'extract');
+            assert.strictEqual(this.mockOpts.inline.ignore, 'ignore');
+            assert.strictEqual(this.mockOpts.inline.selector, 'selector');
             assert.strictEqual(this.mockOpts.inlineImages, true);
             assert.isArray(this.mockOpts.assetPaths);
             assert.include(this.mockOpts.assetPaths, 'assetPath1');
@@ -219,19 +223,6 @@ describe('CLI', function () {
                 path.join(__dirname, '../', this.pkg.bin.critical),
                 'fixtures/generate-default.html',
                 '--no-inline'
-            ];
-
-            require('../cli');
-
-            assert.strictEqual(this.mockOpts.inline, false);
-        });
-
-        it('should set inline to false when passing a falsy value', function () {
-            process.argv = [
-                'node',
-                path.join(__dirname, '../', this.pkg.bin.critical),
-                'fixtures/generate-default.html',
-                '-i', '0'
             ];
 
             require('../cli');

@@ -6,6 +6,7 @@ var meow = require('meow');
 var objectAssign = require('object-assign');
 var indentString = require('indent-string');
 var stdin = require('get-stdin');
+var groupArgs = require('group-args');
 var _ = require('lodash');
 
 var file = require('./lib/fileHelper');
@@ -24,6 +25,7 @@ var help = [
     '   -i, --inline            Generate the HTML with inlined critical-path CSS',
     '   -e, --extract           Extract inlined styles from referenced stylesheets',
     '   -p, --pathPrefix        Path to prepend CSS assets with (defaults to /) ',
+    '   --inline-<option>       Pass options to inline-critical. See https://git.io/vwYMX',
     '   --ii, --inlineImages    Inline images',
     '   --ignore                RegExp, @type or selector to ignore',
     '   --include               RegExp, @type or selector to include',
@@ -37,9 +39,7 @@ var help = [
     '   -S, --styleTarget       Target for generated critical-path CSS (which we inline)'
 ];
 
-var cli = meow({
-    help: help
-}, {
+var minimistOpts = {
     alias: {
         b: 'base',
         c: 'css',
@@ -54,7 +54,14 @@ var cli = meow({
         p: 'pathPrefix',
         ii: 'inlineImages'
     }
-});
+};
+var cli = meow({help: help}, minimistOpts);
+
+cli.flags = groupArgs('inline', {
+    ignore: ['inline-images'],
+    argv: cli.flags,
+    strict: false
+}, minimistOpts);
 
 // cleanup cli flags and assert cammelcase keeps camelcase
 cli.flags = _.reduce(cli.flags, function (res, val, key) {
@@ -72,9 +79,6 @@ cli.flags = _.reduce(cli.flags, function (res, val, key) {
         case 'pathprefix':
             res.pathPrefix = val;
             break;
-        case 'inline':
-            res.inline = val && val !== 'false' || typeof val === 'undefined';
-            break;
         case 'inlineimages':
             res.inlineImages = val;
             break;
@@ -82,7 +86,6 @@ cli.flags = _.reduce(cli.flags, function (res, val, key) {
             res.maxFileSize = val;
             break;
         case 'assetpaths':
-        case 'assetPaths':
             if (_.isString(val)) {
                 val = [val];
             }
